@@ -1,0 +1,55 @@
+version: '3.9'
+
+services:
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus:/etc/prometheus/
+    container_name: prometheus
+    hostname: prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    environment:
+      TZ: "Europe/Kiev"
+    networks:
+      - monitor-net
+  pushgateway:
+    image: prom/pushgateway:latest
+    container_name: pushgateway
+    hostname: pushgateway
+    restart: unless-stopped
+    expose:
+      - 9091
+    ports:
+      - "9091:9091"
+    networks:
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+  grafana:
+    image: grafana/grafana
+    user: root
+    depends_on:
+      - prometheus
+    ports:
+      - 3000:3000
+    volumes:
+      - ./grafana:/var/lib/grafana
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+    container_name: grafana
+    hostname: grafana
+    restart: unless-stopped
+    environment:
+      TZ: "Europe/Kiev"
+    networks:
+      - monitor-net
+networks:
+  monitor-net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16

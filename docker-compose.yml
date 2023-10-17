@@ -1,7 +1,6 @@
 version: '3.9'
 
 services:
-
   prometheus:
     image: prom/prometheus:latest
     volumes:
@@ -10,6 +9,7 @@ services:
     hostname: prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-remote-write-receiver
     ports:
       - "9090:9090"
     restart: unless-stopped
@@ -17,19 +17,6 @@ services:
       TZ: "Europe/Kiev"
     networks:
       - monitor-net
-  pushgateway:
-    image: prom/pushgateway:latest
-    container_name: pushgateway
-    hostname: pushgateway
-    restart: unless-stopped
-    expose:
-      - 9091
-    ports:
-      - "9091:9091"
-    networks:
-      - monitor-net
-    labels:
-      org.label-schema.group: "monitoring"
   grafana:
     image: grafana/grafana
     user: root

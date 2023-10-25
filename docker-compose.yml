@@ -4,18 +4,29 @@ services:
   prometheus:
     image: prom/prometheus:latest
     volumes:
-      - ./prometheus:/etc/prometheus/
-    container_name: prometheus
+      - prometheus-storage:/var/lib/influxdb2:rw
     hostname: prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --web.enable-remote-write-receiver
       - --storage.tsdb.retention.time=1y
     ports:
-      - "9090:9090"
+      - ${DOCKER_PROMETHEUS_INIT_PORT}:9090
     restart: unless-stopped
     environment:
       TZ: "Europe/Kiev"
+    networks:
+      - monitor-net
+  influxdb:
+    image: influxdb:2.1.1
+    volumes:
+      - influxdb-storage:/var/lib/influxdb2:rw
+    env_file:
+      - .env
+    entrypoint: [ "./entrypoint.sh" ]
+    restart: on-failure
+    ports:
+      - ${DOCKER_INFLUXDB_INIT_PORT}:8086
     networks:
       - monitor-net
   grafana:
@@ -23,11 +34,11 @@ services:
     user: root
     depends_on:
       - prometheus
+      - influxdb
     ports:
-      - 3000:3000
+      - ${GRAFANA_PORT}:3000
     volumes:
-      - ./grafana:/var/lib/grafana
-      - ./grafana/provisioning/:/etc/grafana/provisioning/
+      - grafana-storage:/var/lib/grafana:rw
     container_name: grafana
     hostname: grafana
     restart: unless-stopped
@@ -35,6 +46,12 @@ services:
       TZ: "Europe/Kiev"
     networks:
       - monitor-net
+
+volumes:
+  grafana-storage:
+  influxdb-storage:
+  prometheus-storage:
+
 networks:
   monitor-net:
     ipam:

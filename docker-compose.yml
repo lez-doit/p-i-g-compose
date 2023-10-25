@@ -39,7 +39,6 @@ services:
       - ${GRAFANA_PORT}:3000
     volumes:
       - grafana-storage:/var/lib/grafana:rw
-    container_name: grafana
     hostname: grafana
     restart: unless-stopped
     environment:
